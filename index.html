@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Magruder Media</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/js/all.min.js"></script>
+    <style>
+        /* Define multiple weights for Avenir LT Pro */
+        @font-face {
+            font-family: 'Avenir LT Pro';
+            src: url('avenir-lt-pro/AvenirLTProLight.otf') format('opentype');
+            font-weight: 300; /* Light */
+            font-style: normal;
+        }
+
+        @font-face {
+            font-family: 'Avenir LT Pro';
+            src: url('avenir-lt-pro/AvenirLTProMedium.otf') format('opentype');
+            font-weight: 400; /* Regular */
+            font-style: normal;
+        }
+
+        @font-face {
+            font-family: 'Avenir LT Pro';
+            src: url('avenir-lt-pro/AvenirLTProBlack.otf') format('opentype');
+            font-weight: 900; /* Black */
+            font-style: normal;
+        }
+
+        /* Define Futura LT font */
+        @font-face {
+            font-family: 'Futura LT';
+            src: url('futura-lt/FuturaLt.ttf') format('truetype'),
+                url('futura-lt/FuturaLt-light.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        /* General styling */
+        body {
+            margin: 0;
+            font-family: 'Avenir LT Pro', sans-serif;
+            font-weight: 400; /* Default weight */
+            overflow-x: hidden;
+        }
+
+        .hero {
+            position: relative;
+            width: 100%;
+            height: 100vh; /* Full viewport height */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            overflow: hidden;
+        }
+
+        .hero video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: -1;
+        }
+
+        .hero-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 0;
+        }
+
+        .hero-logo {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            z-index: 1;
+        }
+
+        .hero h1 {
+            font-size: 89px;
+            font-weight: 700; /* Bold */
+            margin: 0;
+            z-index: 1;
+            color: white;
+        }
+
+        .hero p {
+            font-size: 23px;
+            margin-top: 10px;
+            z-index: 1;
+            color: white;
+            font-family: 'Futura LT', sans-serif;
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 70px;
+            }
+
+            .hero p {
+                font-size: 20px;
+            }
+        }
+
+        .about {
+            position: relative;
+            background-image: url('parallax.jpg');
+            background-attachment: fixed;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-size: cover;
+            color: black;
+            text-align: center;
+            z-index: 1;
+            height: 80vh;
+            padding-top: 8rem;
+            padding-bottom: 5rem;
+        }
+
+        .about-content {
+            position: absolute;
+            top: 20%; /* Start halfway into the hero section */
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80%;
+            max-width: 800px;
+            background: rgb(255, 255, 255);
+            padding: 2rem;
+            border-radius: 0px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            font-weight: 300; /* Light font weight for About Us section */
+        }
+
+        .about h2 {
+            font-size: 5.82vw;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            font-family: 'Avenir LT Pro', sans-serif;
+            margin-top: 0;
+            text-align: left;
+        }
+
+        .about p {
+            font-size: 16px;
+            line-height: 1.6;
+            margin: 1rem 0;
+            font-family: 'Avenir LT Pro', sans-serif;
+            font-weight: 300; /* Light weight */
+            text-align: left;
+        }
+
+        .about p strong {
+            font-weight: bold;
+        }
+
+        .services {
+            background-color: #000;
+            color: #fff;
+            padding: 50px 0;
+            text-align: center;
+            gap: 60px;
+            display: flex;
+            flex-direction: column;
+            padding-bottom: 200px;
+        }
+
+        .services-title {
+            font-size: 8.53vw;
+            font-weight: 900;
+            text-transform: uppercase;
+            text-align: left;
+            margin-left: 10%;
+            margin-top: -100px;
+            margin-bottom: 20px;
+            z-index: 5;
+            position: relative;
+        }
+
+        .services-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto;
+            max-width: 1200px;
+            background-color: rgb(140, 205, 231); /* Blue box background color */
+            border-radius: 0px;
+            overflow: hidden;
+            width: 80%;
+            padding: 10px;
+            height: 350px;
+        }
+
+        .services-image {
+            flex: 1;
+            text-align: center;
+        }
+
+        .services-image img {
+            width: 100%;
+            max-width: 400px;
+            height: auto;
+        }
+
+        .services-text {
+            flex: 1;
+            padding: 40px;
+            text-align: left;
+        }
+
+        .services-text h2 {
+            font-size: 3rem;
+            margin: 0;
+            font-weight: 900;
+            color: #fff;
+        }
+
+        .services-text p {
+            margin-top: 10px;
+            font-size: 1.2rem;
+            color: #fff;
+        }
+
+        .carousel {
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+            height: 250px;
+        }
+
+        .carousel::before,
+        .carousel::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 50px; /* Width of fade effect */
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .carousel::before {
+            left: 0;
+            background: linear-gradient(to right, rgba(140, 205, 231, 1), rgba(140, 205, 231, 0));
+        }
+
+        .carousel::after {
+            right: 0;
+            background: linear-gradient(to left, rgba(140, 205, 231, 1), rgba(140, 205, 231, 0));
+        }
+
+        .carousel-track {
+            display: flex;
+            animation: scroll 15s linear infinite;
+        }
+
+        .carousel img {
+            height: 100%;
+            width: auto;
+            border-radius: 5px;
+            margin: 0 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        @keyframes scroll {
+            0% {
+                transform: translateX(0%);
+            }
+            100% {
+                transform: translateX(-100%);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .services-container {
+                flex-direction: column;
+                height: auto;
+            }
+
+            .services-text {
+                text-align: center;
+                padding: 20px;
+            }
+
+            .services-text h2 {
+                font-size: 2rem;
+            }
+
+            .carousel img {
+                height: 150px;
+            }
+        }
+
+        .contact {
+            background-color: rgb(140, 205, 231);
+            color: white;
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .contact-title {
+            font-size: 8.53vw;
+            font-weight: 900;
+            text-transform: uppercase;
+            text-align: right;
+            margin-right: 10%;
+            margin-top: -100px;
+            margin-bottom: 20px;
+            z-index: 5;
+            position: relative;
+        }
+
+        .contact h2 {
+            font-size: 3rem;
+            margin-bottom: 20px;
+        }
+
+        .contact p {
+            font-size: 1.5rem;
+            margin-bottom: 30px;
+        }
+
+
+        
+    </style>
+</head>
+
+<body>
+    <!-- Hero Section -->
+    <section class="hero">
+        <video autoplay loop muted>
+            <source src="background.mp4" type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
+        <div class="hero-overlay"></div>
+        <img src="MagruderMedia logo White.png" alt="Magruder Media Logo" class="hero-logo">
+        <h1>Internet:</h1>
+        <p>The Greatest Culture Shift In Human History</p>
+    </section>
+
+    <!-- About Us Section -->
+    <section class="about">
+        <div class="about-content">
+            <h2>ABOUT US</h2>
+            <p>In the 21st century, we shop on Amazon, socialize on Instagram, learn on YouTube, pay with Bitcoin, connect on Zoom, entertain ourselves on Netflix, and more. The internet has completely transformed our culture in just a few decades - <strong>And it is just getting started.</strong></p>
+            <p>We are seeing more and more headlines for things like Blockchain, Augmented Reality, Virtual Reality, Artificial Intelligence, Internet of Things, NFTs, Starlink, 5G, Quantum Computing, Automation, Neuralink and more. Humanity has <strong>never</strong> seen this level of exponential change - not even close.</p>
+            <p>Historically, in times of great changes, some organizations experience meteoric expansions, while others file for bankruptcies they never could have predicted. Now, more than ever, is it important for businesses to evolve with the technology.</p>
+            <p>MagruderMedia is committed to serving humanity through this time of unprecedented technological and social change. We work with businesses of all sizes, evolving in the constantly-shifting landscape of web design, video production, graphic design, Facebook advertising, and more. Together, we are impacting the lives of tens of thousands of people around the world.</p>
+            <p><strong>What will we create together?</strong></p>
+        </div>
+    </section>
+
+    <!-- Services Section -->
+    <section class="services">
+        <h1 class="services-title">Services</h1>
+        <div class="services-container">
+            <div class="services-image">
+                <img src="arc.png" alt="Web Design Showcase">
+            </div>
+            <div class="services-text">
+                <h2>Web Design</h2>
+                <p>Beautiful websites designed to convert</p>
+            </div>
+        </div>
+
+        <div class="services-container">
+            <div class="services-text">
+                <h2>Content Creation</h2>
+                <p>Graphic Design | Video Production | Print Media</p>
+            </div>
+            <div class="carousel">
+                <div class="carousel-track">
+                    <img src="1.png" alt="Content Creation Image 1">
+                    <img src="2.png" alt="Content Creation Image 2">
+                    <img src="3.png" alt="Content Creation Image 3">
+                    <img src="4.png" alt="Content Creation Image 4">
+                    <img src="5.png" alt="Content Creation Image 5">
+                    <img src="6.png" alt="Content Creation Image 6">
+                    <img src="7.png" alt="Content Creation Image 7">
+                </div>
+            </div>
+        </div>
+
+        <div class="services-container">
+            <div class="services-image">
+                <img src="graphic.png" alt="Megaphone">
+            </div>
+            <div class="services-text">
+                <h2>Paid Advertising</h2>
+                <p>Instagram | Facebook | Google</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="contact">
+        <h1 class="contact-title">Contact Us</h1>
+        <section id='signup' class="gradient-bg text-white py-20">
+            <div class="container mx-auto px-6 text-center">
+                <div class="text-left">
+                    <link rel="stylesheet" href="https://cdn.formbold.com/formbold.css" />
+                    <br />
+                    <div class="formbold-builder-form themeOne" style="margin-top: -100px;">
+                      <form
+                        enctype="multipart/form-data"
+                        action="https://formbold.com/s/3ngQp"
+                        method="POST"
+                        class="mx-auto w-full max-w-[570px] rounded-[10px] border border-stroke bg-white p-10 themeOne"
+                      >
+                        <div class="SortableItem fb-builder-item">
+                          <h3
+                            class="static text-xl font-semibold leading-tight text-black sm:text-[28px]"
+                          >
+                            Contact
+                          </h3>
+                        </div>
+                        <div class="SortableItem fb-builder-item">
+                          <div class="mb-4">
+                            <label class="mb-2.5 block text-base text-black"
+                              ><span>Name</span></label
+                            ><input
+                              type="text"
+                              class="w-full rounded border border-stroke bg-white px-5 py-3 text-base text-black outline-none focus:border-primary"
+                              name="text_input_F6636197-E95F-4F04-A7DA-E56AE0B9A470"
+                              placeholder="Name"
+                              value=""
+                            />
+                          </div>
+                        </div>
+                        <div class="SortableItem fb-builder-item">
+                          <div class="mb-4">
+                            <label class="mb-2.5 block text-base text-black"
+                              ><span>Phone Number</span></label
+                            ><input
+                              type="tel"
+                              class="w-full rounded border border-stroke bg-white px-5 py-3 text-base text-black outline-none focus:border-primary"
+                              name="phone_input_1154698D-7318-49B4-BF58-59D555AC70CC"
+                              placeholder="Phone Number"
+                              value=""
+                            />
+                          </div>
+                        </div>
+                        <div class="SortableItem fb-builder-item">
+                          <div class="mb-4">
+                            <label class="mb-2.5 block text-base text-black"
+                              ><span>E-Mail</span
+                              ><span class="label-required pl-1 text-red-400">*</span></label
+                            ><input
+                              type="email"
+                              class="w-full rounded border border-stroke bg-white px-5 py-3 text-base text-black outline-none focus:border-primary"
+                              name="email_input_33B91064-3372-4F20-B197-B7842093434B"
+                              placeholder="Enter Email Address"
+                              value=""
+                              required=""
+                            />
+                          </div>
+                        </div>
+                        <div class="SortableItem fb-builder-item">
+                          <div class="mb-4">
+                            <label class="mb-2.5 block text-base text-black"
+                              ><span>Message</span></label
+                            ><textarea
+                              class="w-full rounded border border-stroke bg-white px-5 py-3 text-base text-black outline-none focus:border-primary"
+                              name="text_area_B46ED956-6741-4A0D-98BA-1BDB21056DB7"
+                              placeholder="Message"
+                            ></textarea>
+                          </div>
+                        </div>
+                        <div class="btn-toolbar flex items-center space-x-3">
+                          <input
+                            type="submit"
+                            class="bg-white text-indigo-600 px-8 py-3 rounded-full font-bold hover:bg-indigo-100 transition"
+                            value="Submit"
+                          />
+                        </div>
+                      </form>
+                      <p class="mt-8 flex items-center justify-center">
+                        
+                      </p>
+                    </div>
+                </div>
+             </div>
+        </section>
+
+        <div>
+            <p>If Matthew is expecting to meet with you, <a href="https://calendly.com/matthewmagruder/meeting" target="_blank" style="color: #0056b3; text-decoration: underline;">click here to schedule a time</a>.</p>
+        </div>
+    </section>
+    
+</body>
+
+</html>

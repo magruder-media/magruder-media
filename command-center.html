@@ -1,0 +1,1012 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
+  <meta name="googlebot" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
+  <meta name="bingbot" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
+  <meta name="referrer" content="no-referrer">
+  <title>ChatGPT Command Center — Private Prototype</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f4f5f3;
+      --panel: #ffffff;
+      --ink: #171a18;
+      --muted: #687069;
+      --line: #dfe3df;
+      --line-strong: #cfd5d0;
+      --accent: #1f6f54;
+      --accent-soft: #e9f4ef;
+      --needs: #a85a12;
+      --needs-soft: #fff5e8;
+      --needs-line: #edb977;
+      --working: #28698a;
+      --working-soft: #edf7fb;
+      --working-line: #8fc8dd;
+      --ready: #287255;
+      --ready-soft: #edf8f2;
+      --ready-line: #88c8aa;
+      --unknown: #68716b;
+      --unknown-soft: #f2f4f2;
+      --unknown-line: #bbc2bd;
+      --danger: #a54740;
+      --shadow: 0 18px 55px rgba(28, 35, 30, .10), 0 2px 8px rgba(28, 35, 30, .05);
+      --radius: 16px;
+    }
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      min-width: 320px;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 14px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button, input, select, textarea { font: inherit; }
+    button, select { cursor: pointer; }
+    button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+      outline: 3px solid rgba(31, 111, 84, .18);
+      outline-offset: 2px;
+    }
+
+    .app-shell { min-height: 100vh; }
+
+    .app-header {
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      height: 66px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 0 34px;
+      border-bottom: 1px solid rgba(207, 213, 208, .85);
+      background: rgba(250, 251, 249, .92);
+      backdrop-filter: blur(18px);
+    }
+
+    .brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+    .brand-mark {
+      width: 33px;
+      height: 33px;
+      display: grid;
+      place-items: center;
+      border-radius: 10px;
+      color: #fff;
+      background: #202521;
+      box-shadow: 0 5px 14px rgba(24, 30, 26, .16);
+      font-size: 15px;
+      font-weight: 760;
+      letter-spacing: -.05em;
+    }
+    .brand-copy { min-width: 0; }
+    .brand-title { font-size: 14px; line-height: 1.2; font-weight: 730; letter-spacing: -.015em; }
+    .brand-subtitle { margin-top: 2px; color: #7a827b; font-size: 11px; line-height: 1.2; }
+
+    .header-actions { display: flex; align-items: center; gap: 8px; }
+    .button {
+      min-height: 36px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      padding: 8px 12px;
+      border: 1px solid var(--line-strong);
+      border-radius: 10px;
+      color: #343a35;
+      background: #fff;
+      font-weight: 650;
+      line-height: 1;
+      box-shadow: 0 1px 2px rgba(25, 32, 27, .03);
+      transition: border-color .16s ease, background .16s ease, transform .16s ease, box-shadow .16s ease;
+    }
+    .button:hover { border-color: #aeb8b0; background: #fafbf9; box-shadow: 0 4px 12px rgba(25, 32, 27, .06); }
+    .button:active { transform: translateY(1px); }
+    .button-primary { border-color: #202521; color: #fff; background: #202521; }
+    .button-primary:hover { border-color: #111411; color: #fff; background: #111411; }
+    .button-quiet { border-color: transparent; background: transparent; box-shadow: none; color: #6c746d; }
+    .button-quiet:hover { border-color: var(--line); background: #fff; box-shadow: none; color: #282d29; }
+    .button-danger { color: var(--danger); }
+    .button svg { width: 16px; height: 16px; }
+
+    .workspace { width: min(1480px, calc(100% - 68px)); margin: 0 auto; padding: 31px 0 72px; }
+    .page-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 22px; }
+    .eyebrow { margin: 0 0 8px; color: #7c847e; font-size: 11px; font-weight: 750; letter-spacing: .11em; text-transform: uppercase; }
+    h1 { margin: 0; font-size: clamp(29px, 3vw, 40px); font-weight: 720; letter-spacing: -.048em; line-height: 1.08; }
+    .page-description { margin: 8px 0 0; color: var(--muted); font-size: 15px; }
+    .provider-note { max-width: 350px; color: #7c847e; font-size: 11px; line-height: 1.5; text-align: right; }
+    .provider-note strong { color: #4f5751; font-weight: 680; }
+
+    .command-bar {
+      position: sticky;
+      top: 78px;
+      z-index: 20;
+      display: grid;
+      grid-template-columns: minmax(250px, 1fr) auto;
+      gap: 12px 18px;
+      padding: 13px;
+      border: 1px solid rgba(207, 213, 208, .92);
+      border-radius: 15px;
+      background: rgba(255, 255, 255, .94);
+      box-shadow: 0 8px 28px rgba(33, 40, 35, .065);
+      backdrop-filter: blur(18px);
+    }
+    .search-wrap { position: relative; min-width: 0; }
+    .search-wrap svg { position: absolute; left: 12px; top: 50%; width: 16px; height: 16px; transform: translateY(-50%); color: #7f8781; pointer-events: none; }
+    .search-input {
+      width: 100%;
+      height: 38px;
+      padding: 0 13px 0 37px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      color: var(--ink);
+      background: #fafbf9;
+      transition: border-color .16s ease, background .16s ease, box-shadow .16s ease;
+    }
+    .search-input::placeholder { color: #949b95; }
+    .search-input:focus { border-color: #93ad9f; background: #fff; box-shadow: 0 0 0 3px rgba(31, 111, 84, .08); outline: 0; }
+
+    .filter-controls { display: flex; align-items: center; justify-content: flex-end; gap: 7px; }
+    .filter-select, .filter-toggle {
+      height: 38px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      color: #4d554f;
+      background: #fff;
+      font-size: 12px;
+      font-weight: 620;
+    }
+    .filter-select { max-width: 150px; padding: 0 30px 0 10px; }
+    .filter-toggle { display: inline-flex; align-items: center; gap: 7px; padding: 0 11px; }
+    .filter-toggle.active { border-color: #8fb3a1; color: #1f684f; background: var(--accent-soft); }
+    .toggle-dot { width: 7px; height: 7px; border: 1px solid #929a94; border-radius: 50%; background: #fff; }
+    .filter-toggle.active .toggle-dot { border-color: var(--accent); background: var(--accent); box-shadow: 0 0 0 3px rgba(31,111,84,.10); }
+    .clear-button { height: 38px; padding: 0 10px; color: #5e665f; border: 0; border-radius: 9px; background: transparent; font-size: 12px; font-weight: 680; }
+    .clear-button:hover:not(:disabled) { color: #252a26; background: #f0f2ef; }
+    .clear-button:disabled { opacity: .38; cursor: default; }
+
+    .view-strip {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      min-width: 0;
+      padding-top: 11px;
+      border-top: 1px solid #ecefec;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .view-strip::-webkit-scrollbar { display: none; }
+    .view-chip {
+      flex: 0 0 auto;
+      min-height: 33px;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 7px 10px;
+      border: 1px solid transparent;
+      border-radius: 9px;
+      color: #656d66;
+      background: transparent;
+      font-size: 12px;
+      font-weight: 680;
+    }
+    .view-chip:hover { color: #2f3530; background: #f3f5f2; }
+    .view-chip.active { border-color: #d8ded9; color: #1f2521; background: #eef1ee; }
+    .view-count { min-width: 20px; padding: 2px 5px; border-radius: 10px; color: #687069; background: #e5e9e5; font-size: 10px; line-height: 1.2; text-align: center; }
+    .view-chip.active .view-count { color: #fff; background: #59615b; }
+    .view-count.filtered { color: #8a4c13; background: #fff0df; }
+
+    .overview-cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 20px 0 25px; }
+    .overview-card {
+      position: relative;
+      min-height: 138px;
+      padding: 19px 19px 17px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fff;
+      box-shadow: 0 2px 8px rgba(28, 35, 30, .035);
+      text-align: left;
+      transition: border-color .18s ease, transform .18s ease, box-shadow .18s ease;
+    }
+    .overview-card::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 4px; background: var(--card-color); }
+    .overview-card:hover { border-color: var(--card-line); transform: translateY(-1px); box-shadow: 0 10px 26px rgba(28, 35, 30, .07); }
+    .overview-card.needs { --card-color: var(--needs); --card-line: var(--needs-line); }
+    .overview-card.working { --card-color: var(--working); --card-line: var(--working-line); }
+    .overview-card.ready { --card-color: var(--ready); --card-line: var(--ready-line); }
+    .overview-card.later { --card-color: #7866a7; --card-line: #b8abd5; }
+    .card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+    .card-label { font-size: 13px; font-weight: 730; }
+    .card-count { font-size: 31px; font-weight: 720; letter-spacing: -.05em; line-height: 1; }
+    .card-count small { margin-left: 4px; color: #8c938e; font-size: 10px; font-weight: 650; letter-spacing: 0; }
+    .card-description { max-width: 245px; margin: 27px 0 0; color: #747c76; font-size: 12px; line-height: 1.45; }
+
+    .list-section { margin-top: 22px; }
+    .list-heading { display: flex; align-items: end; justify-content: space-between; gap: 16px; margin: 0 2px 11px; }
+    .list-title { margin: 0; font-size: 17px; font-weight: 720; letter-spacing: -.025em; }
+    .result-summary { color: #858c87; font-size: 11px; }
+    .result-summary strong { color: #59615b; font-weight: 720; }
+
+    .chat-list { display: grid; gap: 9px; }
+    .chat-row {
+      --status-color: var(--unknown);
+      --status-soft: var(--unknown-soft);
+      --status-line: var(--unknown-line);
+      position: relative;
+      display: grid;
+      grid-template-columns: 18px minmax(280px, 1fr) minmax(142px, auto) minmax(132px, auto) 92px 42px;
+      align-items: center;
+      gap: 15px;
+      min-height: 90px;
+      padding: 14px 12px 14px 15px;
+      overflow: visible;
+      border: 1px solid color-mix(in srgb, var(--status-line) 65%, #dfe3df);
+      border-radius: 14px;
+      background: linear-gradient(90deg, var(--status-soft) 0%, color-mix(in srgb, var(--status-soft) 48%, #fff) 38%, #fff 100%);
+      box-shadow: 0 2px 7px rgba(28, 35, 30, .035);
+      cursor: pointer;
+      transition: border-color .16s ease, box-shadow .16s ease, transform .16s ease;
+    }
+    .chat-row::before { content: ""; position: absolute; inset: -1px auto -1px -1px; width: 5px; border-radius: 14px 0 0 14px; background: var(--status-color); }
+    .chat-row:hover { border-color: var(--status-line); transform: translateY(-1px); box-shadow: 0 10px 25px rgba(28, 35, 30, .075); }
+    .chat-row[data-status="Needs Me"] { --status-color: var(--needs); --status-soft: var(--needs-soft); --status-line: var(--needs-line); }
+    .chat-row[data-status="Working"] { --status-color: var(--working); --status-soft: var(--working-soft); --status-line: var(--working-line); }
+    .chat-row[data-status="Ready"] { --status-color: var(--ready); --status-soft: var(--ready-soft); --status-line: var(--ready-line); }
+    .chat-row.returned { animation: rowReturn .85s ease; }
+    @keyframes rowReturn { 0% { box-shadow: 0 0 0 4px rgba(31,111,84,.16); } 100% { box-shadow: 0 2px 7px rgba(28,35,30,.035); } }
+
+    .unread-cell { align-self: stretch; display: grid; place-items: center; }
+    .unread-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--status-color); box-shadow: 0 0 0 3px color-mix(in srgb, var(--status-color) 13%, transparent); }
+    .thread-copy { min-width: 0; }
+    .thread-title-line { display: flex; align-items: center; gap: 8px; min-width: 0; }
+    .thread-title { overflow: hidden; color: #252a26; font-size: 14px; font-weight: 610; letter-spacing: -.012em; text-overflow: ellipsis; white-space: nowrap; }
+    .chat-row.unread .thread-title { color: #111411; font-weight: 760; }
+    .flag-mark { flex: 0 0 auto; color: #a8571b; font-size: 14px; line-height: 1; }
+    .thread-description { margin-top: 7px; overflow: hidden; color: #6c746e; font-size: 12px; line-height: 1.4; text-overflow: ellipsis; white-space: nowrap; }
+
+    .project-chip {
+      min-width: 0;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 9px;
+      border: 1px solid #d5dad6;
+      border-radius: 9px;
+      color: #3e4640;
+      background: rgba(255,255,255,.84);
+      font-size: 11px;
+      font-weight: 720;
+      box-shadow: 0 1px 2px rgba(30,37,32,.035);
+      white-space: nowrap;
+    }
+    .project-dot { width: 9px; height: 9px; flex: 0 0 auto; border-radius: 3px; background: var(--project-color, #6a8074); }
+    .project-name { overflow: hidden; text-overflow: ellipsis; }
+
+    .status-block { min-width: 0; }
+    .status-badge { display: inline-flex; align-items: center; gap: 7px; color: var(--status-color); font-size: 11px; font-weight: 780; }
+    .status-pulse { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+    .chat-row[data-status="Working"] .status-pulse { animation: softPulse 2.1s ease-in-out infinite; }
+    @keyframes softPulse { 0%,100% { opacity: .46; box-shadow: 0 0 0 0 rgba(40,105,138,.2); } 50% { opacity: 1; box-shadow: 0 0 0 4px rgba(40,105,138,0); } }
+    .status-detail { margin-top: 6px; overflow: hidden; color: #7f8781; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+    .time-cell { color: #777f79; font-size: 11px; text-align: right; white-space: nowrap; }
+    .time-cell strong { display: block; margin-bottom: 4px; color: #555d57; font-weight: 680; }
+
+    .menu-cell { position: relative; display: flex; justify-content: flex-end; }
+    .more-button { width: 34px; height: 34px; display: grid; place-items: center; border: 1px solid transparent; border-radius: 9px; color: #717972; background: transparent; opacity: 0; transition: opacity .14s ease, background .14s ease, border-color .14s ease; }
+    .chat-row:hover .more-button, .more-button.open, .more-button:focus-visible { opacity: 1; }
+    .more-button:hover, .more-button.open { border-color: #d8ddd9; color: #303631; background: #fff; }
+    .thread-menu {
+      position: absolute;
+      z-index: 50;
+      top: 39px;
+      right: 0;
+      width: 205px;
+      padding: 6px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fff;
+      box-shadow: 0 18px 45px rgba(27, 34, 29, .16);
+      cursor: default;
+      animation: menuIn .12s ease-out;
+    }
+    @keyframes menuIn { from { opacity: 0; transform: translateY(-4px) scale(.985); } }
+    .menu-item { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 9px 10px; border: 0; border-radius: 8px; color: #414842; background: transparent; font-size: 12px; text-align: left; }
+    .menu-item:hover { background: #f1f3f0; }
+    .menu-item.danger { color: var(--danger); }
+    .menu-divider { height: 1px; margin: 5px 4px; background: #ecefec; }
+
+    .empty-state { padding: 65px 24px; border: 1px dashed #cfd5d0; border-radius: 15px; color: #747c76; background: rgba(255,255,255,.58); text-align: center; }
+    .empty-state strong { display: block; margin-bottom: 7px; color: #363c37; font-size: 15px; }
+
+    .focus-stage { min-height: calc(100vh - 66px); padding: 22px 0 56px; background: #eceeeb; animation: focusStageIn .27s ease both; }
+    @keyframes focusStageIn { from { opacity: .4; } }
+    .focus-context { width: min(1180px, calc(100% - 68px)); margin: 0 auto 14px; }
+    .focus-context-top { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+    .back-button { display: inline-flex; align-items: center; gap: 7px; padding: 7px 10px 7px 6px; border: 0; border-radius: 9px; color: #555d57; background: transparent; font-weight: 680; }
+    .back-button:hover { color: #1e231f; background: rgba(255,255,255,.72); }
+    .context-label { color: #808782; font-size: 11px; }
+    .focus-title { margin: 12px 0 0; font-size: 24px; font-weight: 720; letter-spacing: -.035em; }
+    .embedded-browser-wrap { width: min(1100px, calc(100% - 68px)); margin: 19px auto 0; }
+    .embedded-browser-heading { display: flex; align-items: end; justify-content: space-between; gap: 24px; margin: 0 2px 10px; }
+    .embedded-browser-heading strong { display: block; color: #3c433e; font-size: 12px; }
+    .embedded-browser-heading span { color: #7a827c; font-size: 10px; }
+    .linked-source { max-width: 460px; overflow: hidden; color: #6f7771; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+
+    .browser-window {
+      overflow: hidden;
+      border: 1px solid #bfc5c0;
+      border-radius: 15px;
+      background: #fff;
+      box-shadow: var(--shadow);
+      transform-origin: 50% 12%;
+      animation: browserExpand .31s cubic-bezier(.2,.8,.2,1) both;
+    }
+    .browser-window.closing { animation: browserCollapse .22s cubic-bezier(.4,0,.8,.2) both; }
+    @keyframes browserExpand { from { opacity: 0; transform: translateY(12px) scale(.975); } to { opacity: 1; transform: none; } }
+    @keyframes browserCollapse { to { opacity: 0; transform: translateY(10px) scale(.975); } }
+    .browser-chrome { color: #363b37; background: #e7e9e6; }
+    .browser-tab-strip { height: 40px; display: flex; align-items: flex-end; gap: 13px; padding: 0 14px; border-bottom: 1px solid #d0d4d1; }
+    .window-dots { display: flex; gap: 6px; padding-bottom: 14px; }
+    .window-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .window-dot.red { background: #ec6a5f; }
+    .window-dot.yellow { background: #f4bd4f; }
+    .window-dot.green { background: #61c454; }
+    .browser-tab { width: min(310px, 45vw); height: 32px; display: flex; align-items: center; gap: 8px; padding: 0 12px; border: 1px solid #d1d5d2; border-bottom-color: #f6f7f5; border-radius: 9px 9px 0 0; background: #f6f7f5; font-size: 11px; font-weight: 620; }
+    .chatgpt-mark { width: 16px; height: 16px; display: grid; place-items: center; border-radius: 5px; color: #fff; background: #202521; font-size: 8px; font-weight: 800; }
+    .browser-tab-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .new-tab-glyph { padding-bottom: 9px; color: #747b75; font-size: 18px; line-height: 1; }
+    .browser-toolbar { min-height: 46px; display: grid; grid-template-columns: 82px minmax(180px, 1fr) auto; align-items: center; gap: 10px; padding: 7px 12px; background: #f6f7f5; }
+    .browser-nav { display: flex; align-items: center; gap: 5px; color: #858c86; font-size: 17px; }
+    .browser-nav span { width: 21px; height: 21px; display: grid; place-items: center; border-radius: 5px; }
+    .address-bar { min-width: 0; height: 31px; display: flex; align-items: center; gap: 8px; padding: 0 11px; border: 1px solid #dde1dd; border-radius: 8px; background: #fff; box-shadow: inset 0 1px 2px rgba(20,25,21,.035); font-size: 10px; }
+    .address-lock { color: #6c746e; font-size: 9px; }
+    .address-domain { color: #333934; font-weight: 700; }
+    .address-path { overflow: hidden; color: #8a918b; text-overflow: ellipsis; white-space: nowrap; }
+    .linked-url-label { display: inline-flex; align-items: center; gap: 6px; color: #5e665f; font-size: 10px; font-weight: 670; white-space: nowrap; }
+
+    .prototype-strip { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 9px 18px; border-bottom: 1px solid #ecefec; color: #69716b; background: #fbfcfa; font-size: 10px; }
+    .prototype-strip strong { color: #39403b; }
+    .prototype-strip .mock-note { color: #8a8170; text-align: right; }
+
+    .chatgpt-surface { min-height: 580px; color: #202420; background: #fff; }
+    .chatgpt-header { height: 52px; display: flex; align-items: center; justify-content: space-between; padding: 0 22px; border-bottom: 1px solid #eef0ee; }
+    .chatgpt-header strong { font-size: 13px; font-weight: 680; }
+    .chatgpt-header span { color: #808782; font-size: 10px; }
+    .focus-status { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 11px 22px; border-bottom: 1px solid color-mix(in srgb, var(--focus-line) 55%, #ecefec); color: var(--focus-color); background: var(--focus-soft); }
+    .focus-status-left { display: flex; align-items: center; gap: 9px; font-size: 11px; font-weight: 760; }
+    .focus-status-detail { color: #707872; font-size: 10px; }
+
+    .conversation { width: min(760px, calc(100% - 48px)); margin: 0 auto; padding: 31px 0 18px; }
+    .message { display: grid; grid-template-columns: 28px minmax(0,1fr); gap: 12px; margin-bottom: 28px; }
+    .message-avatar { width: 28px; height: 28px; display: grid; place-items: center; border: 1px solid #dfe3df; border-radius: 8px; color: #fff; background: #202521; font-size: 9px; font-weight: 780; }
+    .message.user .message-avatar { color: #505751; background: #f0f2ef; }
+    .message-meta { margin: 1px 0 7px; color: #777f79; font-size: 10px; }
+    .message-meta strong { margin-right: 6px; color: #343a35; font-size: 11px; }
+    .message-body { color: #343934; font-size: 13px; line-height: 1.63; }
+    .message-body p { margin: 0 0 9px; }
+    .message-body ul { margin: 8px 0 0; padding-left: 20px; }
+    .message-body li { margin: 4px 0; }
+    .artifact-card { margin-top: 13px; padding: 14px; border: 1px solid #dbe0dc; border-radius: 12px; background: #fafbf9; }
+    .artifact-label { color: #68716b; font-size: 9px; font-weight: 780; letter-spacing: .09em; text-transform: uppercase; }
+    .artifact-title { margin-top: 6px; color: #272c28; font-size: 13px; font-weight: 720; }
+    .artifact-description { margin-top: 5px; color: #68706a; font-size: 11px; line-height: 1.45; }
+    .artifact-meta { margin-top: 10px; color: #89908a; font-size: 9px; }
+    .typing { display: inline-flex; align-items: center; gap: 4px; height: 18px; }
+    .typing i { width: 5px; height: 5px; border-radius: 50%; background: #778079; animation: typing 1s infinite ease-in-out; }
+    .typing i:nth-child(2) { animation-delay: .13s; }
+    .typing i:nth-child(3) { animation-delay: .26s; }
+    @keyframes typing { 0%,65%,100% { opacity: .35; transform: translateY(0); } 30% { opacity: 1; transform: translateY(-2px); } }
+
+    .composer-wrap { position: sticky; bottom: 0; padding: 11px 24px 20px; background: linear-gradient(180deg, rgba(255,255,255,0), #fff 25%); }
+    .quick-replies { width: min(760px, 100%); display: flex; gap: 6px; margin: 0 auto 8px; overflow-x: auto; scrollbar-width: none; }
+    .quick-reply { flex: 0 0 auto; padding: 6px 9px; border: 1px solid #dfe3df; border-radius: 9px; color: #5f675f; background: #fff; font-size: 10px; }
+    .quick-reply:hover { border-color: #aeb7af; color: #333934; background: #f8faf7; }
+    .composer { width: min(760px, 100%); display: grid; grid-template-columns: 34px minmax(0,1fr) 36px; align-items: end; gap: 7px; margin: 0 auto; padding: 8px; border: 1px solid #d4dad5; border-radius: 16px; background: #fff; box-shadow: 0 8px 26px rgba(25,32,27,.09); }
+    .composer textarea { min-height: 37px; max-height: 120px; padding: 9px 5px 7px; resize: vertical; border: 0; color: #262b27; background: transparent; outline: 0; line-height: 1.4; }
+    .composer textarea::placeholder { color: #969d97; }
+    .composer-icon { width: 34px; height: 34px; display: grid; place-items: center; border: 0; border-radius: 10px; color: #6f7771; background: transparent; }
+    .composer-icon:hover { background: #f0f2ef; }
+    .send-button { width: 34px; height: 34px; display: grid; place-items: center; border: 0; border-radius: 10px; color: #fff; background: #202521; }
+    .send-button:hover { background: #111411; }
+    .composer-note { width: min(760px,100%); margin: 8px auto 0; color: #989e99; font-size: 9px; text-align: center; }
+
+    .modal-backdrop { position: fixed; z-index: 100; inset: 0; display: grid; place-items: center; padding: 24px; background: rgba(28,33,29,.34); backdrop-filter: blur(4px); animation: fadeIn .14s ease; }
+    @keyframes fadeIn { from { opacity: 0; } }
+    .modal { width: min(440px, 100%); padding: 18px; border: 1px solid #d6dbd7; border-radius: 16px; background: #fff; box-shadow: 0 25px 80px rgba(20,25,21,.22); animation: modalIn .18s cubic-bezier(.2,.8,.2,1); }
+    @keyframes modalIn { from { opacity: 0; transform: translateY(8px) scale(.985); } }
+    .modal-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; margin-bottom: 17px; }
+    .modal-title { margin: 0; font-size: 17px; font-weight: 730; letter-spacing: -.025em; }
+    .modal-description { margin: 5px 0 0; color: #747c76; font-size: 11px; line-height: 1.45; }
+    .modal-close { width: 30px; height: 30px; display: grid; place-items: center; border: 0; border-radius: 8px; color: #6d756e; background: transparent; font-size: 18px; }
+    .modal-close:hover { background: #f0f2ef; }
+    .modal-options { display: grid; gap: 7px; }
+    .modal-option { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 11px 12px; border: 1px solid #e0e4e0; border-radius: 10px; color: #404741; background: #fff; text-align: left; }
+    .modal-option:hover { border-color: #b8c1ba; background: #f8faf8; }
+    .modal-option strong { font-size: 12px; }
+    .modal-option span { color: #858c86; font-size: 10px; }
+    .field { margin-top: 13px; }
+    .field label { display: block; margin-bottom: 6px; color: #5f675f; font-size: 10px; font-weight: 720; }
+    .field input, .field select { width: 100%; height: 40px; padding: 0 11px; border: 1px solid #d9ded9; border-radius: 9px; color: #2e342f; background: #fff; }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 17px; }
+    .status-options { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .status-option { padding: 12px; border: 1px solid var(--option-line); border-radius: 11px; color: var(--option-color); background: var(--option-soft); font-weight: 720; text-align: left; }
+    .status-option small { display: block; margin-top: 4px; color: #747c76; font-size: 9px; font-weight: 500; line-height: 1.35; }
+
+    .toast { position: fixed; z-index: 120; left: 50%; bottom: 24px; max-width: calc(100% - 32px); padding: 10px 14px; border: 1px solid rgba(255,255,255,.14); border-radius: 10px; color: #fff; background: #252b26; box-shadow: 0 12px 35px rgba(20,25,21,.24); font-size: 11px; font-weight: 650; transform: translateX(-50%); animation: toastIn .2s ease; }
+    @keyframes toastIn { from { opacity: 0; transform: translate(-50%, 8px); } }
+
+    @media (max-width: 1160px) {
+      .command-bar { grid-template-columns: 1fr; }
+      .filter-controls { justify-content: flex-start; flex-wrap: wrap; }
+      .view-strip { grid-column: 1; }
+      .chat-row { grid-template-columns: 18px minmax(260px,1fr) 145px 125px 74px 36px; gap: 10px; }
+      .overview-card { min-height: 148px; }
+    }
+
+    @media (max-width: 900px) {
+      .app-header { padding: 0 18px; }
+      .brand-subtitle, .button-quiet .button-label { display: none; }
+      .workspace { width: calc(100% - 28px); padding-top: 22px; }
+      .page-heading { align-items: flex-start; }
+      .provider-note { display: none; }
+      .command-bar { top: 74px; }
+      .overview-cards { grid-template-columns: repeat(2, minmax(0,1fr)); }
+      .chat-row { grid-template-columns: 14px minmax(0,1fr) auto 36px; min-height: 106px; }
+      .project-chip { grid-column: 2; justify-self: start; }
+      .status-block { grid-column: 3; grid-row: 1; }
+      .time-cell { display: none; }
+      .menu-cell { grid-column: 4; grid-row: 1 / 3; }
+      .embedded-browser-wrap, .focus-context { width: calc(100% - 28px); }
+      .browser-toolbar { grid-template-columns: 66px minmax(120px,1fr); }
+      .linked-url-label { display: none; }
+    }
+
+    @media (max-width: 640px) {
+      .app-header { height: 60px; }
+      .brand-title { font-size: 12px; }
+      .header-actions { gap: 4px; }
+      .button { min-height: 34px; padding: 7px 9px; font-size: 11px; }
+      .workspace { padding-bottom: 40px; }
+      h1 { font-size: 28px; }
+      .page-description { font-size: 13px; }
+      .command-bar { top: 68px; padding: 10px; }
+      .filter-controls { display: grid; grid-template-columns: 1fr 1fr; width: 100%; }
+      .filter-select { width: 100%; max-width: none; }
+      .clear-button { border: 1px solid var(--line); }
+      .overview-cards { grid-template-columns: 1fr 1fr; gap: 8px; }
+      .overview-card { min-height: 125px; padding: 15px; }
+      .card-description { margin-top: 20px; font-size: 10px; }
+      .card-count { font-size: 27px; }
+      .chat-row { grid-template-columns: 12px minmax(0,1fr) 34px; gap: 9px; padding: 13px 9px 13px 12px; }
+      .status-block { grid-column: 2; grid-row: 2; }
+      .project-chip { grid-column: 2; grid-row: 3; }
+      .menu-cell { grid-column: 3; grid-row: 1 / 4; }
+      .more-button { opacity: 1; }
+      .embedded-browser-heading { align-items: flex-start; flex-direction: column; gap: 4px; }
+      .linked-source { max-width: 100%; }
+      .browser-window { border-radius: 12px; }
+      .browser-tab-strip { padding: 0 10px; }
+      .window-dots { display: none; }
+      .browser-tab { width: calc(100% - 30px); }
+      .browser-toolbar { grid-template-columns: minmax(0,1fr); padding: 7px; }
+      .browser-nav { display: none; }
+      .prototype-strip { align-items: flex-start; flex-direction: column; gap: 3px; padding: 9px 12px; }
+      .prototype-strip .mock-note { text-align: left; }
+      .chatgpt-header, .focus-status { padding-left: 14px; padding-right: 14px; }
+      .conversation { width: calc(100% - 28px); }
+      .composer-wrap { padding-left: 12px; padding-right: 12px; }
+      .status-options { grid-template-columns: 1fr; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+  <div id="modal-root"></div>
+  <div id="toast-root" aria-live="polite"></div>
+
+  <script>
+    (() => {
+      'use strict';
+
+      const STORAGE_KEY = 'magruder-command-center:prototype-v1';
+      const PROJECT_COLORS = {
+        'Product': '#617cbb', 'Research': '#9372b5', 'People': '#ba765c', 'Finance': '#5b8d71',
+        'Growth': '#ba7b42', 'Customer Experience': '#4e8d95', 'Strategy': '#7c6a9e',
+        'Learning': '#7e925b', 'Operations': '#65757c'
+      };
+      const VIEW_INFO = {
+        home: ['Command Center', 'What should you look at next?'],
+        'needs-me': ['Needs Me', 'Chats waiting for your input, approval, file, or decision.'],
+        working: ['Working', 'Long-running chats currently processing work.'],
+        ready: ['Ready', 'New results available for review.'],
+        later: ['Later', 'Snoozed chats that will return to active work when due.'],
+        flagged: ['Flagged', 'Important chats you marked for quick access.'],
+        archive: ['Archive', 'Cleared chats kept out of your active workflow.'],
+        all: ['All Chats', 'Every linked ChatGPT conversation in one place.']
+      };
+      const VIEWS = [
+        ['home', 'Home'], ['needs-me', 'Needs Me'], ['working', 'Working'], ['ready', 'Ready'],
+        ['later', 'Later'], ['flagged', 'Flagged'], ['archive', 'Archive'], ['all', 'All Chats']
+      ];
+      const STATUS_ORDER = { 'Needs Me': 0, 'Ready': 1, 'Working': 2, 'Unknown': 3 };
+
+      const minutesAgo = (m) => new Date(Date.now() - m * 60000).toISOString();
+      const hoursFromNow = (h) => new Date(Date.now() + h * 3600000).toISOString();
+      const seedChats = () => [
+        chat('website-redesign', 'Website Redesign Plan', 'Research competitors, create site architecture, wireframes, and content recommendations', 'Product', 'Working', 4, false, false, false, null, 38),
+        chat('market-research', 'Market Research Report', 'Analyze industry trends and 20 competitors and produce a comprehensive report', 'Research', 'Ready', 8, true, true),
+        chat('annual-hiring', 'Annual Hiring Plan', 'Build a 12-month hiring plan including roles, timing, and headcount priorities', 'People', 'Needs Me', 16, true),
+        chat('q4-budget', 'Q4 Budget Planning', 'Review spending assumptions and produce a proposed Q4 budget with scenarios', 'Finance', 'Ready', 24, true),
+        chat('product-launch', 'Product Launch Strategy', 'Develop positioning, launch channels, timeline, and go-to-market recommendations', 'Growth', 'Working', 31, false, true, false, null, 67),
+        chat('customer-onboarding', 'Customer Onboarding Revamp', 'Audit the existing onboarding journey and redesign the full customer experience', 'Customer Experience', 'Needs Me', 43, true),
+        chat('competitive-analysis', 'Competitive Analysis', 'Compare major competitors across positioning, pricing, features, and acquisition strategy', 'Strategy', 'Unknown', 82, false, true),
+        chat('training-program', 'Training Program Development', 'Research role requirements and produce a practical multi-week curriculum', 'Learning', 'Ready', 94, false, false, false, hoursFromNow(20)),
+        chat('pricing-review', 'Pricing Strategy Review', 'Evaluate packaging, pricing benchmarks, and willingness-to-pay research across segments', 'Strategy', 'Ready', 180, false, true, true),
+        chat('security-audit', 'Security & Compliance Audit', 'Review policies and controls and produce a prioritized remediation plan', 'Operations', 'Unknown', 420, false, false, true)
+      ];
+
+      function chat(id, title, description, project, status, age, unread = false, flagged = false, archived = false, snoozedUntil = null, workingAge = null) {
+        return {
+          id, title, description, project, status, unread, flagged, archived, snoozedUntil,
+          updatedAt: minutesAgo(age), observedAt: minutesAgo(Math.max(1, age - 3)),
+          workingSince: workingAge ? minutesAgo(workingAge) : null,
+          chatUrl: `https://chatgpt.com/c/demo-${id}`,
+          localMessages: []
+        };
+      }
+
+      const conversations = {
+        'website-redesign': {
+          quick: ['Show the competitor matrix', 'Keep the two-path navigation', 'Prioritize mobile next'],
+          messages: [
+            user('Research our main competitors, then create a complete website redesign plan: information architecture, page-level wireframes, and content recommendations. Prioritize clarity and conversion over visual novelty.', '9:12 AM'),
+            assistant('I’ll treat this as one connected workstream so the research directly informs the site structure and wireframes.', ['Audit 12 direct and adjacent competitors', 'Map recurring positioning and conversion patterns', 'Propose the new architecture and key journeys', 'Draft desktop-first wireframes and page messaging'], '9:14 AM'),
+            assistant('Competitor research is complete. I’m consolidating the strongest patterns into the architecture and drafting the core page wireframes. I have enough evidence to recommend a simpler two-path navigation model.', null, '10:01 AM', artifact('Working draft', 'Website redesign workspace', 'Competitor matrix, proposed sitemap, and seven wireframes in progress.', '12 competitors · 23 pages mapped · Updated 4 min ago'))
+          ]
+        },
+        'market-research': {
+          quick: ['Give me the executive summary', 'Stress-test the recommendation', 'Turn this into a presentation'],
+          messages: [
+            user('Analyze the market, major trends, and 20 competitors. The final recommendations should be specific enough to guide positioning decisions next quarter.', 'Yesterday, 2:18 PM'),
+            assistant('Understood. I’ll separate observed market facts from interpretation, compare competitors consistently, and end with a prioritized positioning recommendation.', null, 'Yesterday, 2:21 PM'),
+            assistant('The report is ready. The strongest opportunity is not an unclaimed feature—it is a trust and implementation gap that nearly every competitor leaves unresolved.', ['Most competitors converge on nearly identical capability claims', 'Proof of implementation quality is sparse', 'The clearest wedge combines a narrower audience with stronger evidence'], 'Today, 9:48 AM', artifact('Final report', 'Market landscape & positioning report', 'Industry trends, 20-company comparison, opportunity map, and recommended positioning.', '42 pages · 20 competitors · 68 sources'))
+          ]
+        },
+        'annual-hiring': {
+          quick: ['Use the 30% base case', 'Compare conservative and base', 'Optimize for aggressive'],
+          messages: [
+            user('Build a 12-month hiring plan with roles, timing, dependencies, and headcount priorities. Account for recruiting lead time and manager capacity.', 'Yesterday, 11:06 AM'),
+            assistant('I’ve built the dependency map and modeled three growth cases. One assumption materially changes the sequence: which revenue scenario should the primary plan optimize for?', ['Conservative: 15% annual growth, 6 net-new roles', 'Base: 30% annual growth, 11 net-new roles', 'Aggressive: 50% annual growth, 17 net-new roles'], 'Yesterday, 11:09 AM')
+          ]
+        },
+        'q4-budget': {
+          quick: ['Show the key tradeoffs', 'Explain the downside case', 'Draft the approval memo'],
+          messages: [
+            user('Review current spending assumptions and create a proposed Q4 budget. Include base and downside cases plus the decisions leadership should make.', 'Monday, 4:32 PM'),
+            assistant('I’ll reconcile assumptions first, identify fixed versus reversible commitments, and make the tradeoffs visible in each scenario.', null, 'Monday, 4:35 PM'),
+            assistant('The proposed Q4 budget is ready. The base case stays within the target envelope, but it depends on delaying two lower-confidence initiatives.', null, 'Today, 9:31 AM', artifact('Budget model', 'Q4 budget proposal', 'Base, downside, and investment cases with assumptions and decision gates.', '3 scenarios · 8 decision notes · Updated 24 min ago'))
+          ]
+        },
+        'product-launch': {
+          quick: ['Show the message hierarchy', 'Prioritize the timeline', 'Add a low-budget scenario'],
+          messages: [
+            user('Develop positioning, launch channels, timeline, and a complete go-to-market plan using the customer interviews and product notes in this project.', 'Yesterday, 3:05 PM'),
+            assistant('I found 31 customer interview notes and the latest product brief. I’m clustering the evidence before choosing the primary message.', null, 'Yesterday, 3:09 PM'),
+            assistant('The message hierarchy and channel roles are drafted. I’m reconciling launch timing with product dependencies and building the week-by-week rollout.', null, 'Today, 9:25 AM', artifact('In progress', 'Product launch strategy', 'Positioning, audience narrative, channel plan, and 10-week launch calendar.', '31 interviews synthesized · 4 channels modeled'))
+          ]
+        },
+        'customer-onboarding': {
+          quick: ['Optimize for 30-day activation', 'Prioritize first value', 'Compare both approaches'],
+          messages: [
+            user('Audit the full customer onboarding journey and redesign it. Look for friction across product, email, support, and handoffs—not only app screens.', 'Monday, 10:14 AM'),
+            assistant('I mapped the journey across 27 touchpoints and found two competing definitions of success. Which outcome should anchor the redesigned experience?', ['Fastest time-to-first-value, even if setup remains incomplete', 'Highest 30-day activation, even if the first session is longer'], 'Monday, 10:19 AM')
+          ]
+        },
+        'competitive-analysis': {
+          quick: ['Refresh the observed state', 'Open the linked chat', 'Mark this for later'],
+          messages: [
+            user('Compare the major competitors across positioning, pricing, features, and acquisition strategy. Call out meaningful differences rather than feature-table noise.', 'Tuesday, 1:42 PM'),
+            assistant('I started the comparison and completed the pricing normalization. The Command Center has not observed a reliable newer state for this linked conversation.', null, 'Tuesday, 2:04 PM')
+          ]
+        },
+        'training-program': {
+          quick: ['Review the curriculum', 'Add facilitator notes', 'Create participant worksheets'],
+          messages: [
+            user('Research the role requirements and produce a practical multi-week training curriculum with exercises, assessment points, and facilitator guidance.', 'Monday, 8:15 AM'),
+            assistant('The curriculum is ready for review. It uses six modules, two applied projects, and observable proficiency checks instead of attendance-based completion.', null, 'Monday, 10:46 AM', artifact('Curriculum', 'Role readiness training program', 'Six modules, facilitator notes, applied projects, and assessment rubric.', '6 weeks · 18 sessions · 2 capstone projects'))
+          ]
+        },
+        'pricing-review': {
+          quick: ['Restore to active work', 'Review the recommendation', 'Compare package options'],
+          messages: [user('Evaluate our packaging, pricing benchmarks, and willingness-to-pay research across segments.', 'Last week'), assistant('The review is complete and archived. The strongest move is to simplify packaging before changing headline price.', null, 'Last week', artifact('Pricing review', 'Packaging and pricing recommendation', 'Benchmark set, segment analysis, and recommended packaging changes.', '14 benchmarks · 5 segments'))]
+        },
+        'security-audit': {
+          quick: ['Restore to active work', 'Refresh the observed state', 'Open the linked chat'],
+          messages: [user('Review the policies and controls and produce a prioritized remediation plan.', 'Last week'), assistant('I completed the evidence inventory. This prototype has not observed a reliable final state from the linked conversation.', null, 'Last week')]
+        }
+      };
+
+      function user(text, time) { return { role: 'user', text, time }; }
+      function assistant(text, bullets, time, art = null) { return { role: 'assistant', text, bullets, time, artifact: art }; }
+      function artifact(label, title, description, meta) { return { label, title, description, meta }; }
+
+      const state = {
+        chats: loadChats(), view: 'home', query: '', unread: false,
+        project: 'All projects', status: 'All statuses', recent: 'Any time',
+        activeChatId: null, menuChatId: null, modal: null, listScrollY: 0,
+        returningId: null, replyingId: null, demoChatId: null
+      };
+
+      function loadChats() {
+        try {
+          const stored = localStorage.getItem(STORAGE_KEY);
+          if (stored) return JSON.parse(stored);
+        } catch (_) {}
+        return seedChats();
+      }
+
+      function saveChats() {
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state.chats)); } catch (_) {}
+      }
+
+      function awakenDue() {
+        const now = Date.now();
+        let changed = false;
+        state.chats.forEach(c => {
+          if (c.snoozedUntil && new Date(c.snoozedUntil).getTime() <= now) {
+            c.snoozedUntil = null; c.unread = true; c.archived = false; changed = true;
+          }
+        });
+        if (changed) saveChats();
+      }
+
+      const escapeHtml = (value = '') => String(value).replace(/[&<>'"]/g, ch => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#39;', '"':'&quot;' }[ch]));
+      const isSnoozed = c => Boolean(c.snoozedUntil && new Date(c.snoozedUntil).getTime() > Date.now());
+      const active = c => !c.archived && !isSnoozed(c);
+
+      function formatRelative(iso) {
+        const minutes = Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 60000));
+        if (minutes < 1) return 'just now';
+        if (minutes < 60) return `${minutes} min`;
+        const hours = Math.floor(minutes / 60);
+        if (hours < 24) return `${hours} hr`;
+        return `${Math.floor(hours / 24)}d`;
+      }
+
+      function formatElapsed(iso) {
+        const minutes = Math.max(1, Math.floor((Date.now() - new Date(iso).getTime()) / 60000));
+        if (minutes < 60) return `${minutes} min`;
+        const h = Math.floor(minutes / 60), m = minutes % 60;
+        return m ? `${h}h ${m}m` : `${h} hr`;
+      }
+
+      function formatSnooze(iso) {
+        return new Intl.DateTimeFormat('en', { weekday:'short', month:'short', day:'numeric', hour:'numeric', minute:'2-digit' }).format(new Date(iso));
+      }
+
+      function baseForView(view) {
+        if (view === 'home') return state.chats.filter(active);
+        if (view === 'needs-me') return state.chats.filter(c => active(c) && c.status === 'Needs Me');
+        if (view === 'working') return state.chats.filter(c => active(c) && c.status === 'Working');
+        if (view === 'ready') return state.chats.filter(c => active(c) && c.status === 'Ready');
+        if (view === 'later') return state.chats.filter(isSnoozed);
+        if (view === 'flagged') return state.chats.filter(c => c.flagged);
+        if (view === 'archive') return state.chats.filter(c => c.archived);
+        return [...state.chats];
+      }
+
+      function applyFilters(chats) {
+        const q = state.query.trim().toLowerCase();
+        const cutoff = state.recent === 'Past hour' ? Date.now() - 3600000 : state.recent === 'Today' ? Date.now() - 86400000 : state.recent === 'Past 7 days' ? Date.now() - 604800000 : 0;
+        return chats.filter(c => {
+          if (q && !`${c.title} ${c.description} ${c.project} ${c.status}`.toLowerCase().includes(q)) return false;
+          if (state.unread && !c.unread) return false;
+          if (state.project !== 'All projects' && c.project !== state.project) return false;
+          if (state.status !== 'All statuses' && c.status !== state.status) return false;
+          if (cutoff && new Date(c.updatedAt).getTime() < cutoff) return false;
+          return true;
+        });
+      }
+
+      function sorted(chats) {
+        return [...chats].sort((a,b) => (STATUS_ORDER[a.status] - STATUS_ORDER[b.status]) || (new Date(b.updatedAt) - new Date(a.updatedAt)));
+      }
+
+      function hasFilters() { return Boolean(state.query || state.unread || state.project !== 'All projects' || state.status !== 'All statuses' || state.recent !== 'Any time'); }
+      function filteredCount(view) { return applyFilters(baseForView(view)).length; }
+      function countText(view) {
+        const total = baseForView(view).length, shown = filteredCount(view);
+        return hasFilters() && shown !== total ? `${shown}/${total}` : String(total);
+      }
+
+      function icon(name) {
+        const paths = {
+          search: '<circle cx="11" cy="11" r="7"></circle><path d="m16 16 5 5"></path>',
+          plus: '<path d="M12 5v14M5 12h14"></path>',
+          spark: '<path d="M12 3v3M12 18v3M3 12h3M18 12h3"></path><circle cx="12" cy="12" r="4"></circle>',
+          back: '<path d="m15 18-6-6 6-6"></path>',
+          external: '<path d="M14 4h6v6"></path><path d="m20 4-9 9"></path><path d="M18 13v6H5V6h6"></path>',
+          more: '<circle cx="5" cy="12" r="1" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"></circle><circle cx="19" cy="12" r="1" fill="currentColor" stroke="none"></circle>',
+          send: '<path d="m4 4 17 8-17 8 3-8z"></path><path d="M7 12h14"></path>',
+          paperclip: '<path d="m20.5 11.5-8.8 8.8a6 6 0 0 1-8.5-8.5l9.2-9.2a4 4 0 1 1 5.7 5.7l-9.2 9.2a2 2 0 1 1-2.8-2.8l8.5-8.5"></path>'
+        };
+        return `<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${paths[name] || ''}</svg>`;
+      }
+
+      function renderHeader(focused = false) {
+        return `<header class="app-header">
+          <div class="brand"><div class="brand-mark">CC</div><div class="brand-copy"><div class="brand-title">ChatGPT Command Center</div><div class="brand-subtitle">A local organizational layer for linked Work chats</div></div></div>
+          <div class="header-actions">
+            ${focused ? `<button class="button button-quiet" data-action="open-chat" data-id="${escapeHtml(state.activeChatId)}">${icon('external')}<span class="button-label">Open linked chat</span></button>` : `<button class="button button-quiet" data-action="simulate">${icon('spark')}<span class="button-label">Simulate</span></button><button class="button button-primary" data-action="new-chat">${icon('plus')}New Chat</button>`}
+          </div>
+        </header>`;
+      }
+
+      function render() {
+        awakenDue();
+        const app = document.getElementById('app');
+        const restoreSearchFocus = document.activeElement?.id === 'search-input';
+        app.innerHTML = state.activeChatId ? renderFocus() : renderMain();
+        renderModal();
+        if (!state.activeChatId && restoreSearchFocus) {
+          const search = document.getElementById('search-input');
+          if (search) {
+            search.focus();
+            search.setSelectionRange(search.value.length, search.value.length);
+          }
+        }
+      }
+
+      function renderMain() {
+        const [title, description] = VIEW_INFO[state.view];
+        const projects = [...new Set(state.chats.map(c => c.project))].sort();
+        const list = sorted(applyFilters(baseForView(state.view)));
+        const totalInView = baseForView(state.view).length;
+        return `<div class="app-shell">${renderHeader()}
+          <main class="workspace">
+            <div class="page-heading">
+              <div><p class="eyebrow">AI work overview</p><h1>${escapeHtml(title)}</h1><p class="page-description">${escapeHtml(description)}</p></div>
+              <div class="provider-note"><strong>Prototype status source:</strong> local mock data.<br>Observed state stays separate from your read, flag, snooze, and archive choices.</div>
+            </div>
+            <section class="command-bar" aria-label="Chat views and filters">
+              <div class="search-wrap">${icon('search')}<input id="search-input" class="search-input" type="search" value="${escapeHtml(state.query)}" placeholder="Search title, project, description, or status" autocomplete="off" aria-label="Search chats"></div>
+              <div class="filter-controls">
+                <button class="filter-toggle ${state.unread ? 'active' : ''}" data-action="toggle-unread" aria-pressed="${state.unread}"><span class="toggle-dot"></span>Unread</button>
+                <select class="filter-select" data-filter="project" aria-label="Filter by project"><option>All projects</option>${projects.map(p => `<option ${state.project === p ? 'selected' : ''}>${escapeHtml(p)}</option>`).join('')}</select>
+                <select class="filter-select" data-filter="status" aria-label="Filter by status">${['All statuses','Needs Me','Working','Ready','Unknown'].map(s => `<option ${state.status === s ? 'selected' : ''}>${s}</option>`).join('')}</select>
+                <select class="filter-select" data-filter="recent" aria-label="Filter by recency">${['Any time','Past hour','Today','Past 7 days'].map(s => `<option ${state.recent === s ? 'selected' : ''}>${s}</option>`).join('')}</select>
+                <button class="clear-button" data-action="clear-filters" ${hasFilters() ? '' : 'disabled'}>Clear all</button>
+              </div>
+              <nav class="view-strip" aria-label="Chat views">${VIEWS.map(([key,label]) => `<button class="view-chip ${state.view === key ? 'active' : ''}" data-action="view" data-view="${key}">${label}<span class="view-count ${hasFilters() && filteredCount(key) !== baseForView(key).length ? 'filtered' : ''}" title="${filteredCount(key)} shown out of ${baseForView(key).length} total">${countText(key)}</span></button>`).join('')}</nav>
+            </section>
+            ${state.view === 'home' ? renderOverview() : ''}
+            <section class="list-section">
+              <div class="list-heading"><h2 class="list-title">${state.view === 'home' ? 'Active chats' : escapeHtml(title)}</h2><div class="result-summary">Showing <strong>${list.length}</strong>${hasFilters() || list.length !== totalInView ? ` of ${totalInView}` : ''} chat${totalInView === 1 ? '' : 's'}</div></div>
+              ${list.length ? `<div class="chat-list">${list.map(renderRow).join('')}</div>` : `<div class="empty-state"><strong>No chats match this view</strong>Clear the filters or choose another view.</div>`}
+            </section>
+          </main>
+        </div>`;
+      }
+
+      function renderOverview() {
+        const cards = [
+          ['needs-me','Needs Me','Waiting for your input, approval, file, or decision.','needs'],
+          ['working','Working','Processing now; elapsed time appears in the list.','working'],
+          ['ready','Ready','A new result is available for you to review.','ready'],
+          ['later','Later','Snoozed work that returns as unread when due.','later']
+        ];
+        return `<section class="overview-cards" aria-label="Attention overview">${cards.map(([view,label,desc,cls]) => {
+          const shown = filteredCount(view), total = baseForView(view).length;
+          return `<button class="overview-card ${cls}" data-action="view" data-view="${view}"><div class="card-top"><span class="card-label">${label}</span><span class="card-count">${shown}${hasFilters() && shown !== total ? `<small>of ${total}</small>` : ''}</span></div><p class="card-description">${desc}</p></button>`;
+        }).join('')}</section>`;
+      }
+
+      function renderRow(c) {
+        const statusDetail = c.status === 'Working' && c.workingSince ? `${formatElapsed(c.workingSince)} elapsed` : c.status === 'Unknown' ? `Last observed ${formatRelative(c.observedAt)} ago` : c.status === 'Needs Me' ? 'Waiting for your response' : 'New result available';
+        const projectColor = PROJECT_COLORS[c.project] || '#6f8076';
+        const menu = state.menuChatId === c.id ? `<div class="thread-menu" role="menu">
+          <button class="menu-item" data-action="toggle-read" data-id="${c.id}">${c.unread ? 'Mark read' : 'Mark unread'}</button>
+          <button class="menu-item" data-action="toggle-flag" data-id="${c.id}">${c.flagged ? 'Unflag' : 'Flag'}</button>
+          <button class="menu-item" data-action="snooze" data-id="${c.id}">Snooze <span>›</span></button>
+          <button class="menu-item" data-action="change-project" data-id="${c.id}">Change project</button>
+          <button class="menu-item" data-action="edit-link" data-id="${c.id}">Edit linked URL</button>
+          <div class="menu-divider"></div>
+          <button class="menu-item" data-action="simulate" data-id="${c.id}">Simulate status</button>
+          <button class="menu-item" data-action="open-chat" data-id="${c.id}">Open linked ChatGPT ↗</button>
+          <div class="menu-divider"></div>
+          <button class="menu-item ${c.archived ? '' : 'danger'}" data-action="toggle-archive" data-id="${c.id}">${c.archived ? 'Restore to active work' : 'Archive'}</button>
+        </div>` : '';
+        return `<article class="chat-row ${c.unread ? 'unread' : ''} ${state.returningId === c.id ? 'returned' : ''}" data-action="open-focus" data-id="${c.id}" data-status="${escapeHtml(c.status)}" tabindex="0" aria-label="Open ${escapeHtml(c.title)}">
+          <div class="unread-cell">${c.unread ? '<span class="unread-dot" title="Unread"></span>' : ''}</div>
+          <div class="thread-copy"><div class="thread-title-line"><span class="thread-title">${escapeHtml(c.title)}</span>${c.flagged ? '<span class="flag-mark" title="Flagged">⚑</span>' : ''}</div><div class="thread-description">${escapeHtml(c.description)}</div></div>
+          <div class="project-chip" style="--project-color:${projectColor}"><span class="project-dot"></span><span class="project-name">${escapeHtml(c.project)}</span></div>
+          <div class="status-block"><div class="status-badge"><span class="status-pulse"></span>${escapeHtml(c.status)}</div><div class="status-detail">${escapeHtml(statusDetail)}</div></div>
+          <div class="time-cell"><strong>${formatRelative(c.updatedAt)}</strong>updated</div>
+          <div class="menu-cell"><button class="more-button ${state.menuChatId === c.id ? 'open' : ''}" data-action="toggle-menu" data-id="${c.id}" aria-label="More actions for ${escapeHtml(c.title)}">${icon('more')}</button>${menu}</div>
+        </article>`;
+      }
+
+      function renderFocus() {
+        const c = state.chats.find(chat => chat.id === state.activeChatId);
+        if (!c) { state.activeChatId = null; return renderMain(); }
+        const conv = conversations[c.id] || { quick: ['Continue', 'Summarize the work', 'Show next steps'], messages: [user(c.description, 'Earlier'), assistant('I’m working through this request and will keep the linked conversation updated.', null, 'A moment ago')] };
+        const url = safeUrl(c.chatUrl), path = url.pathname === '/' ? '/c/linked-conversation' : url.pathname;
+        const focusVars = c.status === 'Needs Me' ? ['#a85a12','#fff5e8','#edb977'] : c.status === 'Working' ? ['#28698a','#edf7fb','#8fc8dd'] : c.status === 'Ready' ? ['#287255','#edf8f2','#88c8aa'] : ['#68716b','#f2f4f2','#bbc2bd'];
+        const statusDetail = c.status === 'Working' && c.workingSince ? `${formatElapsed(c.workingSince)} elapsed` : c.status === 'Unknown' ? `Last observed ${formatRelative(c.observedAt)} ago—current state is not known` : c.status === 'Needs Me' ? 'The linked conversation is waiting for your input' : 'A new result is available for review';
+        const local = c.localMessages || [];
+        return `<div class="app-shell">${renderHeader(true)}<main class="focus-stage">
+          <div class="focus-context"><div class="focus-context-top"><button class="back-button" data-action="collapse-focus">${icon('back')}Back to Command Center</button><span class="context-label">Command Center · linked chat</span></div><h1 class="focus-title">${escapeHtml(c.title)}</h1></div>
+          <div class="embedded-browser-wrap">
+            <div class="embedded-browser-heading"><div><strong>Embedded ChatGPT browser</strong><span>Everything inside the framed window below belongs to the linked conversation.</span></div><div class="linked-source">Linked page: ${escapeHtml(c.chatUrl)}</div></div>
+            <section class="browser-window" aria-label="${escapeHtml(c.title)} embedded ChatGPT browser prototype">
+              <div class="browser-chrome">
+                <div class="browser-tab-strip"><div class="window-dots"><span class="window-dot red"></span><span class="window-dot yellow"></span><span class="window-dot green"></span></div><div class="browser-tab"><span class="chatgpt-mark">C</span><span class="browser-tab-text">ChatGPT — ${escapeHtml(c.title)}</span></div><span class="new-tab-glyph">+</span></div>
+                <div class="browser-toolbar"><div class="browser-nav"><span>‹</span><span>›</span><span>↻</span></div><div class="address-bar"><span class="address-lock">●</span><span class="address-domain">chatgpt.com</span><span class="address-path">${escapeHtml(path)}</span></div><span class="linked-url-label">↗ Linked URL</span></div>
+              </div>
+              <div class="prototype-strip"><span><strong>ChatGPT conversation preview</strong> · the entire chat is contained inside this embedded browser.</span><span class="mock-note">Prototype messages are mocked locally—not live-synced yet.</span></div>
+              <div class="chatgpt-surface">
+                <div class="chatgpt-header"><strong>ChatGPT Work</strong><span>${escapeHtml(c.project)} project</span></div>
+                <div class="focus-status" style="--focus-color:${focusVars[0]};--focus-soft:${focusVars[1]};--focus-line:${focusVars[2]}"><div class="focus-status-left"><span class="status-pulse"></span>${escapeHtml(c.status)}</div><div class="focus-status-detail">${escapeHtml(statusDetail)}</div></div>
+                <div class="conversation">${conv.messages.map(renderMessage).join('')}${local.map(renderLocalMessage).join('')}${state.replyingId === c.id ? `<div class="message assistant"><div class="message-avatar">GPT</div><div><div class="message-meta"><strong>ChatGPT</strong>now</div><div class="typing" aria-label="ChatGPT is replying"><i></i><i></i><i></i></div></div></div>` : ''}</div>
+                <div class="composer-wrap"><div class="quick-replies">${conv.quick.map(text => `<button class="quick-reply" data-action="quick-reply" data-text="${escapeHtml(text)}">${escapeHtml(text)}</button>`).join('')}</div><form class="composer" id="chat-form"><button class="composer-icon" type="button" aria-label="Attach a file">${icon('paperclip')}</button><textarea id="chat-draft" rows="1" placeholder="Message the linked ChatGPT conversation"></textarea><button class="send-button" type="submit" aria-label="Send message">${icon('send')}</button></form><div class="composer-note">This prototype simulates interaction locally. A future supported integration would send this to the URL shown above.</div></div>
+              </div>
+            </section>
+          </div>
+        </main></div>`;
+      }
+
+      function safeUrl(value) { try { return new URL(value); } catch (_) { return new URL('https://chatgpt.com/c/linked-conversation'); } }
+
+      function renderMessage(m) {
+        return `<div class="message ${m.role}"><div class="message-avatar">${m.role === 'assistant' ? 'GPT' : 'YOU'}</div><div><div class="message-meta"><strong>${m.role === 'assistant' ? 'ChatGPT' : 'You'}</strong>${escapeHtml(m.time)}</div><div class="message-body"><p>${escapeHtml(m.text)}</p>${m.bullets ? `<ul>${m.bullets.map(b => `<li>${escapeHtml(b)}</li>`).join('')}</ul>` : ''}${m.artifact ? `<div class="artifact-card"><div class="artifact-label">${escapeHtml(m.artifact.label)}</div><div class="artifact-title">${escapeHtml(m.artifact.title)}</div><div class="artifact-description">${escapeHtml(m.artifact.description)}</div><div class="artifact-meta">${escapeHtml(m.artifact.meta)}</div></div>` : ''}</div></div></div>`;
+      }
+
+      function renderLocalMessage(m) { return `<div class="message ${m.role}"><div class="message-avatar">${m.role === 'assistant' ? 'GPT' : 'YOU'}</div><div><div class="message-meta"><strong>${m.role === 'assistant' ? 'ChatGPT' : 'You'}</strong>${escapeHtml(m.time)}</div><div class="message-body"><p>${escapeHtml(m.text)}</p></div></div></div>`; }
+
+      function renderModal() {
+        const root = document.getElementById('modal-root');
+        if (!state.modal) { root.innerHTML = ''; return; }
+        const c = state.modal.id ? state.chats.find(chat => chat.id === state.modal.id) : null;
+        let body = '';
+        if (state.modal.type === 'snooze' && c) {
+          body = modalShell('Snooze this chat', 'It will leave active work now and return unread when the time arrives.', `<div class="modal-options">${[['Later today','5:00 PM'],['Tomorrow','9:00 AM'],['Next week','Monday morning'],['Next month','First day of next month']].map(([label,detail]) => `<button class="modal-option" data-action="apply-snooze" data-id="${c.id}" data-option="${label}"><strong>${label}</strong><span>${detail}</span></button>`).join('')}</div><div class="field"><label for="snooze-date">Pick date and time</label><input id="snooze-date" type="datetime-local"></div><div class="modal-actions"><button class="button" data-action="close-modal">Cancel</button><button class="button button-primary" data-action="apply-custom-snooze" data-id="${c.id}">Snooze</button></div>`);
+        } else if (state.modal.type === 'project' && c) {
+          const projects = [...new Set(state.chats.map(x => x.project))].sort();
+          body = modalShell('Change project', 'Make the workstream easier to scan in the list.', `<div class="field"><label for="project-value">Project or category</label><input id="project-value" list="project-list" value="${escapeHtml(c.project)}"><datalist id="project-list">${projects.map(p => `<option value="${escapeHtml(p)}"></option>`).join('')}</datalist></div><div class="modal-actions"><button class="button" data-action="close-modal">Cancel</button><button class="button button-primary" data-action="apply-project" data-id="${c.id}">Save project</button></div>`);
+        } else if (state.modal.type === 'link' && c) {
+          body = modalShell('Edit linked ChatGPT URL', 'This URL is the source represented by the browser window in this prototype.', `<div class="field"><label for="link-value">ChatGPT conversation URL</label><input id="link-value" type="url" value="${escapeHtml(c.chatUrl)}"></div><div class="modal-actions"><button class="button" data-action="close-modal">Cancel</button><button class="button button-primary" data-action="apply-link" data-id="${c.id}">Save URL</button></div>`);
+        } else if (state.modal.type === 'simulate') {
+          const selected = state.demoChatId || state.modal.id || state.chats.find(active)?.id;
+          body = modalShell('Simulate observed status', 'Demo only. This changes mock ChatGPT state without changing your read, flag, snooze, or archive choices.', `<div class="field"><label for="demo-chat">Chat</label><select id="demo-chat">${state.chats.map(x => `<option value="${x.id}" ${selected === x.id ? 'selected' : ''}>${escapeHtml(x.title)}</option>`).join('')}</select></div><div class="field"><label>Observed state</label><div class="status-options">${[
+            ['Needs Me','#a85a12','#fff5e8','#edb977','Waiting for input or approval'],['Working','#28698a','#edf7fb','#8fc8dd','Processing work now'],['Ready','#287255','#edf8f2','#88c8aa','A result is ready to review'],['Unknown','#68716b','#f2f4f2','#bbc2bd','Only last-observed state is known']
+          ].map(([label,color,soft,line,detail]) => `<button class="status-option" style="--option-color:${color};--option-soft:${soft};--option-line:${line}" data-action="apply-status" data-status="${label}" data-id="${selected}">${label}<small>${detail}</small></button>`).join('')}</div></div>`);
+        }
+        root.innerHTML = `<div class="modal-backdrop" data-action="backdrop-close">${body}</div>`;
+      }
+
+      function modalShell(title, description, content) { return `<section class="modal" role="dialog" aria-modal="true" aria-label="${escapeHtml(title)}" data-modal-card><div class="modal-header"><div><h2 class="modal-title">${escapeHtml(title)}</h2><p class="modal-description">${escapeHtml(description)}</p></div><button class="modal-close" data-action="close-modal" aria-label="Close">×</button></div>${content}</section>`; }
+
+      function showToast(message) {
+        const root = document.getElementById('toast-root');
+        root.innerHTML = `<div class="toast">${escapeHtml(message)}</div>`;
+        clearTimeout(showToast.timer);
+        showToast.timer = setTimeout(() => root.innerHTML = '', 2400);
+      }
+
+      function updateChat(id, patch) {
+        const c = state.chats.find(chat => chat.id === id);
+        if (!c) return;
+        Object.assign(c, patch, { updatedAt: new Date().toISOString() });
+        saveChats(); render();
+      }
+
+      function getSnoozeDate(option) {
+        const d = new Date();
+        if (option === 'Later today') { d.setHours(17,0,0,0); if (d <= new Date()) d.setTime(Date.now() + 3 * 3600000); return d; }
+        if (option === 'Tomorrow') { d.setDate(d.getDate()+1); d.setHours(9,0,0,0); return d; }
+        if (option === 'Next week') { const days = ((8-d.getDay())%7)||7; d.setDate(d.getDate()+days); d.setHours(9,0,0,0); return d; }
+        d.setMonth(d.getMonth()+1,1); d.setHours(9,0,0,0); return d;
+      }
+
+      function withTransition(fn) {
+        if (document.startViewTransition) document.startViewTransition(fn);
+        else fn();
+      }
+
+      document.addEventListener('click', (event) => {
+        const target = event.target.closest('[data-action]');
+        if (!target) { if (state.menuChatId) { state.menuChatId = null; render(); } return; }
+        const action = target.dataset.action, id = target.dataset.id;
+        if (target.closest('[data-modal-card]') && action === 'backdrop-close') return;
+        if (action !== 'open-focus') { event.preventDefault(); event.stopPropagation(); }
+
+        if (action === 'view') { state.view = target.dataset.view; state.menuChatId = null; render(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+        else if (action === 'toggle-unread') { state.unread = !state.unread; render(); }
+        else if (action === 'clear-filters') { state.query = ''; state.unread = false; state.project = 'All projects'; state.status = 'All statuses'; state.recent = 'Any time'; render(); }
+        else if (action === 'new-chat') { window.open('https://chatgpt.com/', '_blank', 'noopener,noreferrer'); }
+        else if (action === 'toggle-menu') { state.menuChatId = state.menuChatId === id ? null : id; render(); }
+        else if (action === 'toggle-read') { const c = state.chats.find(x => x.id === id); const next = !c.unread; updateChat(id, { unread: next }); showToast(next ? 'Marked unread' : 'Marked read'); }
+        else if (action === 'toggle-flag') { const c = state.chats.find(x => x.id === id); const next = !c.flagged; updateChat(id, { flagged: next }); showToast(next ? 'Chat flagged' : 'Flag removed'); }
+        else if (action === 'toggle-archive') { const c = state.chats.find(x => x.id === id); const next = !c.archived; updateChat(id, { archived: next, snoozedUntil: next ? null : c.snoozedUntil }); showToast(next ? 'Archived' : 'Restored to active work'); }
+        else if (action === 'snooze') { state.menuChatId = null; state.modal = { type:'snooze', id }; render(); }
+        else if (action === 'change-project') { state.menuChatId = null; state.modal = { type:'project', id }; render(); }
+        else if (action === 'edit-link') { state.menuChatId = null; state.modal = { type:'link', id }; render(); }
+        else if (action === 'simulate') { state.menuChatId = null; state.demoChatId = id || state.demoChatId || state.chats.find(active)?.id; state.modal = { type:'simulate', id: id || null }; render(); }
+        else if (action === 'open-chat') { const c = state.chats.find(x => x.id === id); if (c) window.open(c.chatUrl, '_blank', 'noopener,noreferrer'); }
+        else if (action === 'open-focus') {
+          if (event.target.closest('button, select, input, a')) return;
+          const c = state.chats.find(x => x.id === id); if (!c) return;
+          state.listScrollY = window.scrollY; c.unread = false; saveChats(); state.menuChatId = null;
+          withTransition(() => { state.activeChatId = id; render(); window.scrollTo(0,0); });
+        }
+        else if (action === 'collapse-focus') {
+          const browser = document.querySelector('.browser-window'); if (browser) browser.classList.add('closing');
+          setTimeout(() => withTransition(() => { const returning = state.activeChatId; state.activeChatId = null; state.returningId = returning; render(); window.scrollTo(0, state.listScrollY); setTimeout(() => { state.returningId = null; }, 900); }), 180);
+        }
+        else if (action === 'close-modal' || action === 'backdrop-close') { state.modal = null; render(); }
+        else if (action === 'apply-snooze') { const until = getSnoozeDate(target.dataset.option); state.modal = null; updateChat(id, { snoozedUntil: until.toISOString(), archived: false }); showToast(`Snoozed until ${formatSnooze(until.toISOString())}`); }
+        else if (action === 'apply-custom-snooze') { const value = document.getElementById('snooze-date')?.value; if (!value || new Date(value) <= new Date()) { showToast('Choose a future date and time'); return; } state.modal = null; updateChat(id, { snoozedUntil: new Date(value).toISOString(), archived: false }); showToast(`Snoozed until ${formatSnooze(new Date(value).toISOString())}`); }
+        else if (action === 'apply-project') { const value = document.getElementById('project-value')?.value.trim(); if (!value) { showToast('Enter a project name'); return; } state.modal = null; updateChat(id, { project: value }); showToast('Project updated'); }
+        else if (action === 'apply-link') { const value = document.getElementById('link-value')?.value.trim(); try { const url = new URL(value); if (!['http:','https:'].includes(url.protocol)) throw new Error(); state.modal = null; updateChat(id, { chatUrl: url.toString() }); showToast('Linked URL updated'); } catch (_) { showToast('Enter a valid https:// URL'); } }
+        else if (action === 'apply-status') { const selectedId = document.getElementById('demo-chat')?.value || id; const status = target.dataset.status; state.modal = null; updateChat(selectedId, { status, observedAt: new Date().toISOString(), workingSince: status === 'Working' ? new Date().toISOString() : null, unread: status === 'Ready' || status === 'Needs Me' ? true : state.chats.find(x => x.id === selectedId).unread }); showToast(`Observed state set to ${status}`); }
+        else if (action === 'quick-reply') { const draft = document.getElementById('chat-draft'); if (draft) { draft.value = target.dataset.text; draft.focus(); } }
+      });
+
+      document.addEventListener('input', (event) => {
+        if (event.target.id === 'search-input') { state.query = event.target.value; render(); }
+      });
+
+      document.addEventListener('change', (event) => {
+        const key = event.target.dataset.filter;
+        if (key) { state[key] = event.target.value; render(); }
+        if (event.target.id === 'demo-chat') { state.demoChatId = event.target.value; state.modal.id = event.target.value; render(); }
+      });
+
+      document.addEventListener('submit', (event) => {
+        if (event.target.id !== 'chat-form') return;
+        event.preventDefault();
+        const draft = document.getElementById('chat-draft');
+        const text = draft?.value.trim();
+        if (!text || !state.activeChatId) return;
+        const c = state.chats.find(x => x.id === state.activeChatId);
+        c.localMessages = c.localMessages || [];
+        c.localMessages.push({ role:'user', text, time:'now' });
+        c.updatedAt = new Date().toISOString(); saveChats(); state.replyingId = c.id; render();
+        setTimeout(() => {
+          const current = state.chats.find(x => x.id === c.id); if (!current) return;
+          current.localMessages.push({ role:'assistant', text:'I’ve added that direction to the work. In a live integration, this message would be sent to the linked ChatGPT URL shown in the browser bar above.', time:'now' });
+          current.status = 'Working'; current.observedAt = new Date().toISOString(); current.workingSince = new Date().toISOString(); current.unread = false; saveChats(); state.replyingId = null; render();
+        }, 900);
+      });
+
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+          if (state.modal) { state.modal = null; render(); }
+          else if (state.menuChatId) { state.menuChatId = null; render(); }
+          else if (state.activeChatId) document.querySelector('[data-action="collapse-focus"]')?.click();
+        }
+        if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k' && !state.activeChatId) { event.preventDefault(); document.getElementById('search-input')?.focus(); }
+        if ((event.key === 'Enter' || event.key === ' ') && event.target.classList.contains('chat-row')) { event.preventDefault(); event.target.click(); }
+      });
+
+      window.addEventListener('storage', (event) => { if (event.key === STORAGE_KEY) { state.chats = loadChats(); render(); } });
+      setInterval(() => { awakenDue(); if (!state.activeChatId) render(); }, 30000);
+      render();
+    })();
+  </script>
+</body>
+</html>
